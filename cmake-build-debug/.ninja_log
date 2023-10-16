@@ -1,0 +1,6 @@
+# ninja log v5
+0	419	7191737138386909	build.ninja	f3650a06ed09aa0d
+3	587	7183515728912107	CMakeFiles/main.dir/main.cpp.obj	ca9e63a5e1951541
+3	551	7190876676319619	CMakeFiles/new_thread_pool.dir/main.cpp.obj	c1cf309f311f377a
+552	743	7190876678158954	new_thread_pool.exe	dc16c6e1bb0017c8
+587	761	7183515730602422	main.exe	cbe5c2b2a1e85a71
