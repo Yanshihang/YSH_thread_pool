@@ -38,9 +38,9 @@
 			[
 				{
 					"directoryIndex" : 0,
-					"id" : "new_thread_pool::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-new_thread_pool-Debug-6d2f29b10cf9709d431c.json",
-					"name" : "new_thread_pool",
+					"id" : "main::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-main-Debug-b70bbd61b2c331c1d573.json",
+					"name" : "main",
 					"projectIndex" : 0
 				}
 			]
@@ -49,12 +49,12 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "E:/CLionProject/new_thread_pool/cmake-build-debug",
-		"source" : "E:/CLionProject/new_thread_pool"
+		"build" : "E:/CLionProject/YSH_thread_pool/cmake-build-debug",
+		"source" : "E:/CLionProject/YSH_thread_pool"
 	},
 	"version" : 
 	{
 		"major" : 2,
-		"minor" : 5
+		"minor" : 6
 	}
 }

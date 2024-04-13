@@ -1,7 +1,7 @@
-set(CMAKE_CXX_COMPILER "D:/programming/CLion/CLion 2023.1.3/bin/mingw/bin/g++.exe")
+set(CMAKE_CXX_COMPILER "C:/compiler/mingw64/bin/g++.exe")
 set(CMAKE_CXX_COMPILER_ARG1 "")
 set(CMAKE_CXX_COMPILER_ID "GNU")
-set(CMAKE_CXX_COMPILER_VERSION "13.1.0")
+set(CMAKE_CXX_COMPILER_VERSION "13.2.0")
 set(CMAKE_CXX_COMPILER_VERSION_INTERNAL "")
 set(CMAKE_CXX_COMPILER_WRAPPER "")
 set(CMAKE_CXX_STANDARD_COMPUTED_DEFAULT "17")
@@ -22,12 +22,13 @@ set(CMAKE_CXX_SIMULATE_VERSION "")
 
 
 
-set(CMAKE_AR "D:/programming/CLion/CLion 2023.1.3/bin/mingw/bin/ar.exe")
-set(CMAKE_CXX_COMPILER_AR "D:/programming/CLion/CLion 2023.1.3/bin/mingw/bin/gcc-ar.exe")
-set(CMAKE_RANLIB "D:/programming/CLion/CLion 2023.1.3/bin/mingw/bin/ranlib.exe")
-set(CMAKE_CXX_COMPILER_RANLIB "D:/programming/CLion/CLion 2023.1.3/bin/mingw/bin/gcc-ranlib.exe")
-set(CMAKE_LINKER "D:/programming/CLion/CLion 2023.1.3/bin/mingw/bin/ld.exe")
+set(CMAKE_AR "C:/compiler/mingw64/bin/ar.exe")
+set(CMAKE_CXX_COMPILER_AR "C:/compiler/mingw64/bin/gcc-ar.exe")
+set(CMAKE_RANLIB "C:/compiler/mingw64/bin/ranlib.exe")
+set(CMAKE_CXX_COMPILER_RANLIB "C:/compiler/mingw64/bin/gcc-ranlib.exe")
+set(CMAKE_LINKER "C:/compiler/mingw64/bin/ld.exe")
 set(CMAKE_MT "")
+set(CMAKE_TAPI "CMAKE_TAPI-NOTFOUND")
 set(CMAKE_COMPILER_IS_GNUCXX 1)
 set(CMAKE_CXX_COMPILER_LOADED 1)
 set(CMAKE_CXX_COMPILER_WORKS TRUE)
@@ -36,7 +37,7 @@ set(CMAKE_CXX_ABI_COMPILED TRUE)
 set(CMAKE_CXX_COMPILER_ENV_VAR "CXX")
 
 set(CMAKE_CXX_COMPILER_ID_RUN 1)
-set(CMAKE_CXX_SOURCE_FILE_EXTENSIONS C;M;c++;cc;cpp;cxx;m;mm;mpp;CPP;ixx;cppm)
+set(CMAKE_CXX_SOURCE_FILE_EXTENSIONS C;M;c++;cc;cpp;cxx;m;mm;mpp;CPP;ixx;cppm;ccm;cxxm;c++m)
 set(CMAKE_CXX_IGNORE_EXTENSIONS inl;h;hpp;HPP;H;o;O;obj;OBJ;def;DEF;rc;RC)
 
 foreach (lang C OBJC OBJCXX)
@@ -49,6 +50,7 @@ endforeach()
 
 set(CMAKE_CXX_LINKER_PREFERENCE 30)
 set(CMAKE_CXX_LINKER_PREFERENCE_PROPAGATES 1)
+set(CMAKE_CXX_LINKER_DEPFILE_SUPPORTED TRUE)
 
 # Save compiler ABI information.
 set(CMAKE_CXX_SIZEOF_DATA_PTR "8")
@@ -77,7 +79,7 @@ endif()
 
 
 
-set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "D:/programming/CLion/CLion 2023.1.3/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++;D:/programming/CLion/CLion 2023.1.3/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/x86_64-w64-mingw32;D:/programming/CLion/CLion 2023.1.3/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/backward;D:/programming/CLion/CLion 2023.1.3/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include;D:/programming/CLion/CLion 2023.1.3/bin/mingw/include;D:/programming/CLion/CLion 2023.1.3/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed;D:/programming/CLion/CLion 2023.1.3/bin/mingw/x86_64-w64-mingw32/include")
-set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "")
-set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "")
+set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "C:/compiler/mingw64/lib/gcc/x86_64-w64-mingw32/13.2.0/include/c++;C:/compiler/mingw64/lib/gcc/x86_64-w64-mingw32/13.2.0/include/c++/x86_64-w64-mingw32;C:/compiler/mingw64/lib/gcc/x86_64-w64-mingw32/13.2.0/include/c++/backward;C:/compiler/mingw64/lib/gcc/x86_64-w64-mingw32/13.2.0/include;C:/compiler/mingw64/lib/gcc/x86_64-w64-mingw32/13.2.0/include-fixed;C:/compiler/mingw64/x86_64-w64-mingw32/include")
+set(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "stdc++;mingw32;gcc_s;gcc;moldname;mingwex;kernel32;advapi32;shell32;user32;kernel32;iconv;mingw32;gcc_s;gcc;moldname;mingwex;kernel32")
+set(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "C:/compiler/mingw64/lib/gcc/x86_64-w64-mingw32/13.2.0;C:/compiler/mingw64/lib/gcc;C:/compiler/mingw64/x86_64-w64-mingw32/lib;C:/compiler/mingw64/lib")
 set(CMAKE_CXX_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")

@@ -1,7 +1,7 @@
-#include "YSH_thread_pool.hpp"
+#include "test.cpp"
+
 
 int main() {
-
-
+    test();
     return 0;
 }

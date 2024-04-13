@@ -4,8 +4,7 @@
 // date: 2023-10-04
 // version: 0.0.1
 
-#define YSH_THREAD_POOL_VERSION "v0.0.1 (2023-10-04)"
-
+#define YSH_THREAD_POOL
 #include <future>
 #include <functional>
 #include "type_traits"
@@ -29,7 +28,7 @@ template <typename T>
 class multi_future {
 public:
 //    构造一个能容纳给定数量的multi_future对象
-    explicit multi_future(const size_t num_future=0) : futures(num_future){};
+    multi_future(const size_t num_future=0) : futures(num_future) {};
 
 // 等待异步线程都执行完毕后，返回所有的future结果
     [[nodiscard]] std::conditional_t<std::is_void_v<T>,void,std::vector<T>> get() {
@@ -43,7 +42,7 @@ public:
             std::vector<T> res;
             for (auto &item:futures) {
                 res.push_back(item.get());
-//                res.push_back(std::move(item));  // 通过std::move将左值转换为右值引用，不用copy变量了，提高了性能
+//                res.push_back(std::move(item.get()));  // 通过std::move将左值转换为右值引用，不用copy变量了，提高了性能
             }
             return res;
         }
@@ -53,7 +52,7 @@ public:
     [[nodiscard]] std::future<T>& operator[](const size_t index) {
 //        判断给定的下标是否超出异步线程的数量
         if (index>=futures.size()) {
-
+            throw std::out_of_range("Index out of range");
         }else {
             return futures[index];
         }
@@ -108,7 +107,7 @@ public:
     }
 
     [[nodiscard]] T get_block_end(const size_t i) const {
-        return (i == num_blocks -1) ? after_last_index : (static_cast<T>(i*block_size) + first_index);
+        return (i == num_blocks -1) ? after_last_index : (static_cast<T>((i+1)*block_size) + first_index);
     }
 
     [[nodiscard]] size_t get_num_blocks() const {
@@ -145,25 +144,29 @@ private:
 class thread_pool {
 public:
     // 公有成员函数
-    thread_pool(const concurrency_t thread_num_ = 0) : thread_num(determine_thread_num(thread_num_)),threads(std::make_unique<std::thread[]>(thread_num)) {
+    thread_pool(const concurrency_t thread_num_ = 0) : thread_num(determine_thread_num(thread_num_)),threads(std::make_unique<std::thread[]>(determine_thread_num(thread_num_))) {
         create_threads();
     }
 
     ~thread_pool() {
+        wait_for_tasks();
         destory_threads();
     }
 
 
 
     [[nodiscard]] size_t get_tasks_queued() const {
+        const std::scoped_lock tasks_lock(tasks_mutex);
         return tasks.size();
     }
 
     [[nodiscard]] size_t get_tasks_running_num() const {
+        const std::scoped_lock tasks_lock(tasks_mutex);
         return task_running_num;
     }
 
     [[nodiscard]] size_t get_total_tasks_num() const {
+        const std::scoped_lock tasks_lock(tasks_mutex);
         return tasks.size() + task_running_num;
     }
 
@@ -171,16 +174,32 @@ public:
         return thread_num;
     }
 
-    [[nodiscard]] bool ispaused() const {
+    [[nodiscard]] bool isPaused() const {
+        const std::scoped_lock tasks_lock(tasks_mutex);
         return pause_pool;
     }
 
-    template<typename F,typename T1,typename T2,typename T = std::common_type_t<T1,T2>,typename R = std::invoke_result_t<std::decay<F>,T,T>>
+
+    /**
+     * @brief 并行执行循环，将循环划分为多个块并提交给线程池
+     * @tparam F 对循环进行的操作的函数类型
+     * @tparam T1 循环的起始索引的类型
+     * @tparam T2 循环的终止索引的类型
+     * @tparam T 循环的起始索引和终止索引的公共类型
+     * @tparam R 对循环进行的操作的返回类型
+     * @param first_index 循环的起始索引
+     * @param after_last_index 循环的终止索引
+     * @param loop 对循环进行的操作
+     * @param blocks_num 将循环划分为的块的数量
+     * @return 返回一个multi_future对象，用于获取所有块的结果
+     */
+    template<typename F,typename T1,typename T2,typename T = std::common_type_t<T1,T2>,typename R = std::invoke_result_t<std::decay_t<F>,T,T>>
     [[nodiscard]] multi_future<R> parallelize_loop(const T1 first_index,const T2 after_last_index,F&& loop,const size_t blocks_num = 0) {
         blocks blk(first_index,after_last_index,blocks_num? blocks_num:thread_num);
 //        blocks blk{first_index,after_last_index,blocks_num? blocks_num:thread_num};
         if(blk.get_total_size()>0){
             multi_future<R> mf(blk.get_num_blocks());
+            // 将循环的每个块提交给线程池
             for (size_t i = 0; i < blk.get_num_blocks(); ++i) {
                 mf[i] = submit(std::forward<F>(loop),blk.get_block_start(i),blk.get_block_end(i));
             }
@@ -190,26 +209,46 @@ public:
         }
     }
 
-    template<typename F,typename T,typename R = std::invoke_result_t<std::decay<F>,T,T>>
+    template<typename F,typename T,typename R = std::invoke_result_t<std::decay_t<F>,T,T>>
     [[nodiscard]] multi_future<R> parallelize_loop(const T after_last_index,F&& loop,const size_t blocks_num = 0) {
         return parallelize_loop(0,after_last_index,std::forward<F>(loop),blocks_num);
     }
 
+    /**
+     * @brief 暂停线程池的工作
+     */
     void pause() {
         std::unique_lock tasks_lock(tasks_mutex);
         pause_pool = true;
     }
 
+    /**
+     * @brief 清空任务队列
+     */
     void purge_tasks() {
         std::unique_lock tasks_lock(tasks_mutex);
         while(!tasks.empty())
             tasks.pop();
     }
 
+
+    /**
+     * @brief   提交任务到线程池
+     * @tparam F 可调用对象的类型
+     * @tparam T 一系列参数的类型
+     * @tparam R 可调用对象的返回类型
+     * @param task 可调用对象
+     * @param args  可调用对象的参数
+     * @return  返回一个future对象，用于获取任务的结果
+     */
     template<typename F,typename ...T,typename R = std::invoke_result_t<std::decay_t<F>,std::decay_t<T>...>>
     [[nodiscard]] std::future<R> submit(F&& task,T&& ...args) {
+        // 创建一个promise对象，用于保存任务的结果
         std::shared_ptr<std::promise<R>> task_promise = std::make_shared<std::promise<R>>();
+        // 调用push_task函数，将任务添加到任务队列中
         push_task(
+                // 任务函数：用于调用task函数，并将参数args传递给task函数
+                // 这个lambda用于封装真正想要执行的函数，这样lambda的函数签名为void()，符合std::function<void()>的要求
                 [task_function = std::bind(std::forward<F>(task),std::forward<T>(args)...),task_promise] {
                     try {
                         if constexpr (std::is_void_v<R>) {
@@ -224,13 +263,26 @@ public:
                         try {
                             task_promise->set_exception(std::current_exception());
                         }catch(...) {
-                            
+
                         }
                     }
         });
         return task_promise->get_future();
     }
 
+    /**
+     * @brief 将循环划分为多个块并提交给线程池，与parallelize_loop函数的区别就是这个函数不返回future对象，只是将任务提交给线程池。
+     * @details push_loop()：适用于不需要获取循环块执行结果的场景，例如对大量数据进行并行处理，而不需要关心每个数据块的处理结果。
+                parallelize_loop()：适用于需要获取循环块执行结果的场景，例如对多个数据集进行并行计算，并需要汇总每个数据集的计算结果。
+     * @tparam F
+     * @tparam T1
+     * @tparam T2
+     * @tparam T
+     * @param first_index
+     * @param after_last_index
+     * @param loop
+     * @param blocks_num
+     */
     template<typename F,typename T1,typename T2,typename T = std::common_type_t<T1,T2>>
     void push_loop(const T1 first_index,const T2 after_last_index,F&& loop,const size_t blocks_num=0) {
         blocks blk(first_index,after_last_index,blocks_num?blocks_num:thread_num);
@@ -246,6 +298,13 @@ public:
         push_loop(0,after_last_index,std::forward<F>(loop),blocks_num);
     }
 
+    /**
+     * @brief 将任务添加到任务队列中
+     * @tparam F 任务函数的类型
+     * @tparam A 参数类型
+     * @param function 任务函数
+     * @param args  任务函数的参数
+     */
     template<typename F,typename ...A>
     void push_task(F&& function,A&& ...args) {
         {
@@ -255,7 +314,13 @@ public:
         task_available_cv.notify_one();
     }
 
+    /**
+     * @brief 重置线程池，重新创建线程池中的线程
+     * @param thread_num_ 重置线程池中的线程数量
+     */
     void reset(const concurrency_t  thread_num_=0) {
+        // 重置线程池时，先暂停线程池的工作，然后等待所有任务完成，销毁线程池中的线程，重新创建线程池中的线程
+
         std::unique_lock tasks_lock(tasks_mutex);
         const bool old_pause = pause_pool;
         pause_pool = true;
@@ -269,26 +334,36 @@ public:
     }
 
 
-
+    /**
+     * @brief 恢复线程池的工作
+     */
     void unpause() {
         std::unique_lock tasks_lock(tasks_mutex);
         pause_pool = false;
     }
 
 
-
+    /**
+     * @brief 等待线程池中的所有任务完成
+     */
     void wait_for_tasks() {
         std::unique_lock tasks_lock(tasks_mutex);
         waiting = true;
-        tasks_done_cv.wait(tasks_lock,[this] {return (pause_pool || !tasks.empty()) && !task_running_num;});
+        // 等待线程池中的所有任务完成；同时通过指定的lambda表达式判断是否所有任务完成，来防止假唤醒
+        tasks_done_cv.wait(tasks_lock,[this] {return !task_running_num && (pause_pool || tasks.empty());});
         waiting = false;
     }
 
+    /**
+     * @brief 等待线程池中的所有任务完成，等待的时间由duration参数指定
+     * @param duration 指定的等待时间
+     * @return 返回是否所有任务都已完成
+     */
     template<typename R,typename P>
     bool wait_for_tasks_duration(const std::chrono::duration<R,P>& duration) {
         std::unique_lock tasks_lock(tasks_mutex);
         waiting = true;
-        const bool status = tasks_done_cv.wait_for(tasks_lock,duration,[this] {return (pause_pool || !tasks.empty()) && !task_running_num;});
+        const bool status = tasks_done_cv.wait_for(tasks_lock,duration,[this] {return !task_running_num && (pause_pool || tasks.empty());});
         waiting = false;
         return status;
     }
@@ -297,7 +372,7 @@ public:
     bool wait_for_tasks_until(const std::chrono::time_point<R,P>& time_point) {
         std::unique_lock tasks_lock(tasks_mutex);
         waiting = true;
-        const bool status = tasks_done_cv.wait_until(tasks_lock,time_point,[this] {return (pause_pool || !tasks.empty()) && !task_running_num;});
+        const bool status = tasks_done_cv.wait_until(tasks_lock,time_point,[this] {return !task_running_num && (pause_pool || tasks.empty());});
         waiting = false;
         return status;
     }
@@ -332,24 +407,32 @@ private:
     [[nodiscard]] concurrency_t determine_thread_num(const concurrency_t thread_num_) const{
         if (thread_num_>0) {
             return thread_num_;
-        }else if (std::thread::hardware_concurrency()>0) {
-            return std::thread::hardware_concurrency();
         }else {
-            return 1;
+            if (std::thread::hardware_concurrency()>0) {
+                return std::thread::hardware_concurrency();
+            }else {
+                return 1;
+            }
         }
 
 
     }
 
-    // worker会被分配给每个线程，worker就是线程要执行的函数（线程要完成的工作）
+    // worker会被分配给每个线程，worker就是在线程中直接执行的函数，worker会从任务队列中取出任务（真正的函数）并执行
     void worker() {
+        // 定义一个std::function对象，用于保存从任务队列中取出的任务
         std::function<void()> task;
+        // 无限循环，每个线程会一直在这个循环中运行，直到线程池被停止
         while (true) {
             std::unique_lock tasks_lock(tasks_mutex);
-            task_available_cv.wait(tasks_lock,[this] {return stop_pool||(!tasks.empty() && !pause_pool);});
+            // 被notify后，只有当前队列有任务或者线程池被停止，才会继续执行；否则是假唤醒
+            task_available_cv.wait(tasks_lock,[this] {return !tasks.empty() || stop_pool;});
             if (stop_pool) {
                 break;
             }
+            if (pause_pool)
+                continue;
+            // 从任务队列中取出一个任务，并从队列中移除
             task = std::move(tasks.front());
             tasks.pop();
             ++task_running_num;
@@ -366,7 +449,7 @@ private:
     // 私有数据成员
 
     // 互斥访问任务队列的互斥量
-    std::mutex tasks_mutex{};
+    mutable std::mutex tasks_mutex{};
 
     // 这里的同步原语使用方式相当于生产者-消费者问题
     // 同步原语：是否有可运行的任务
@@ -387,6 +470,7 @@ private:
     // 用于表示是否类的用户是否在wait_for，即类的用户是否主动等待所有任务完成
     bool waiting = false;
 
+    // 这里tasks是任务的存储容器，threads中的线程是任务的执行者
     // 保存线程池中创建的多个线程
     std::unique_ptr<std::thread[]> threads= nullptr;
     // 任务列表（队列）：保存用于运行的任务
