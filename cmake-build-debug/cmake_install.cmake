@@ -1,4 +1,4 @@
-# Install script for directory: E:/CLionProject/new_thread_pool
+# Install script for directory: E:/CLionProject/YSH_thread_pool
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,7 +34,7 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "D:/programming/CLion/CLion 2023.1.3/bin/mingw/bin/objdump.exe")
+  set(CMAKE_OBJDUMP "C:/compiler/mingw64/bin/objdump.exe")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -45,5 +45,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "E:/CLionProject/new_thread_pool/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "E:/CLionProject/YSH_thread_pool/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
