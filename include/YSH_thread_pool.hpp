@@ -144,7 +144,7 @@ private:
 class thread_pool {
 public:
     // 公有成员函数
-    thread_pool(const concurrency_t thread_num_ = 0) : thread_num(determine_thread_num(thread_num_)),threads(std::make_unique<std::thread[]>(determine_thread_num(thread_num_))) {
+    thread_pool(const concurrency_t thread_num_ = 0) : thread_num(determine_thread_num(thread_num_)),threads(std::make_unique<std::thread[]>(thread_num)) {
         create_threads();
     }
 
